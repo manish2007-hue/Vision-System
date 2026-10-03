@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Retinex Vision Research Studio — SVR Robotics</title>
+  <style>
+    :root {
+      --bg: #070a13;
+      --panel: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --cyan: #06b6d4;
+      --green: #10b981;
+      --yellow: #f59e0b;
+      --purple: #8b5cf6;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .brand h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--cyan);
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand p {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+    }
+
+    .tab-btn {
+      background: var(--card);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+      border-color: var(--cyan);
+    }
+
+    .tab-btn.active {
+      background: rgba(6, 182, 212, 0.15);
+      color: var(--cyan);
+      border-color: var(--cyan);
+    }
+
+    main {
+      padding: 18px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      flex: 1;
+    }
+
+    /* IMAGE STUDIO LAYOUT */
+    .studio-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-label {
+      font-size: 0.78rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    select, input[type="file"], .btn-action {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      width: 100%;
+      cursor: pointer;
+      outline: none;
+    }
+
+    select:focus { border-color: var(--cyan); }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--cyan);
+      cursor: pointer;
+    }
+
+    .btn-action {
+      background: var(--cyan);
+      color: #070a13;
+      font-weight: 700;
+      text-align: center;
+      border: none;
+      transition: opacity 0.2s;
+    }
+    .btn-action:hover { opacity: 0.9; }
+
+    .presets-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .btn-preset {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.72rem;
+      padding: 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .btn-preset:hover {
+      color: var(--text);
+      border-color: var(--cyan);
+    }
+
+    .metrics-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      font-size: 0.75rem;
+    }
+
+    .metric-item span { display: block; color: var(--muted); font-size: 0.7rem; }
+    .metric-item strong { color: var(--green); font-size: 0.9rem; }
+
+    .reference-box {
+      background: rgba(6, 182, 212, 0.05);
+      border: 1px dashed rgba(6, 182, 212, 0.3);
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .reference-box strong { color: var(--cyan); }
+
+    /* PANELS DISPLAY */
+    .viewports-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .viewport-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .viewport-header {
+      padding: 10px 14px;
+      background: rgba(15, 23, 42, 0.9);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .viewport-header.primary { border-top: 3px solid var(--green); }
+    .viewport-header.raw { border-top: 3px solid var(--yellow); }
+    .viewport-header.map { border-top: 3px solid var(--purple); }
+
+    .img-container {
+      width: 100%;
+      height: 380px;
+      background: #02040a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .img-container img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      image-rendering: -webkit-optimize-contrast;
+    }
+
+    .loading-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(7, 10, 19, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      color: var(--cyan);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .loading-overlay.active { opacity: 1; pointer-events: auto; }
+
+    /* HARDWARE VIEW (HIDDEN IN STUDIO MODE) */
+    .hardware-layout {
+      display: none;
+    }
+    .hardware-layout.active {
+      display: grid;
+      grid-template-columns: 2.8fr 1.2fr;
+      gap: 18px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <h1>⚡ Retinex Vision Research Studio</h1>
+      <p>Scientific Illumination Decomposition & Shadow Removal (LIME IEEE TIP 2017 & URetinex-Net CVPR 2022)</p>
+    </div>
+
+    <div class="nav-tabs">
+      <button class="tab-btn active" id="tabStudioBtn" onclick="switchTab('studio')">
+        🧪 Image Research Studio (Offline)
+      </button>
+      <button class="tab-btn" id="tabHardwareBtn" onclick="switchTab('hardware')">
+        📹 Live Hardware Stream (ESP32-CAM)
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- MODE 1: IMAGE RESEARCH STUDIO -->
+    <div class="studio-layout" id="studioView">
+      
+      <!-- CONTROLS SIDEBAR -->
+      <div class="card">
+        <div class="card-title">🧪 Benchmark Inputs</div>
+
+        <div class="control-group">
+          <label class="control-label">Select Test Image:</label>
+          <select id="imageSelect" onchange="processCurrentImage()">
+            <option value="">Loading images...</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label">Upload Custom Image:</label>
+          <input type="file" id="fileUpload" accept="image/*" onchange="uploadCustomImage()">
+        </div>
+
+        <div class="card-title" style="margin-top: 6px;">⚙️ Retinex Parameters</div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Gamma Curve (&gamma;):</span>
+            <strong id="gammaVal" style="color:var(--cyan);">0.72</strong>
+          </div>
+          <input type="range" id="gammaRange" min="0.40" max="1.20" step="0.02" value="0.72" oninput="updateParam('gamma')">
+          <small style="font-size:0.68rem; color:var(--muted);">&gamma; &lt; 1.0 lifts deep shadows naturally without blowout.</small>
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Structure Smoothing (&sigma;):</span>
+            <strong id="sigmaVal" style="color:var(--cyan);">35</strong>
+          </div>
+          <input type="range" id="sigmaRange" min="10" max="75" step="1" value="35" oninput="updateParam('sigma')">
+          <small style="font-size:0.68rem; color:var(--muted);">Bilateral filter radius to prevent halo rings.</small>
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Detail Recomposition:</span>
+            <strong id="denoiseVal" style="color:var(--cyan);">35%</strong>
+          </div>
+          <input type="range" id="denoiseRange" min="0.0" max="1.0" step="0.05" value="0.35" oninput="updateParam('denoise')">
+          <small style="font-size:0.68rem; color:var(--muted);">LIME Eq. (11) texture-preserving blending.</small>
+        </div>
+
+        <div class="control-group">
+          <label class="control-label">Research Presets:</label>
+          <div class="presets-grid">
+            <button class="btn-preset" onclick="applyPreset(0.72, 35, 0.35)">LIME Default</button>
+            <button class="btn-preset" onclick="applyPreset(0.65, 40, 0.40)">URetinex Net</button>
+            <button class="btn-preset" onclick="applyPreset(0.50, 45, 0.50)">Deep Shadow</button>
+            <button class="btn-preset" onclick="applyPreset(0.88, 30, 0.20)">Glare Tamer</button>
+          </div>
+        </div>
+
+        <div class="card-title" style="margin-top: 6px;">📊 Scientific Metrics</div>
+        <div class="metrics-box">
+          <div class="metric-item">
+            <span>Latency</span>
+            <strong id="metricLatency">-- ms</strong>
+          </div>
+          <div class="metric-item">
+            <span>Speed</span>
+            <strong id="metricFps">-- FPS</strong>
+          </div>
+          <div class="metric-item">
+            <span>Mean (In &rarr; Out)</span>
+            <strong id="metricMean">-- &rarr; --</strong>
+          </div>
+          <div class="metric-item">
+            <span>Std Dev (Detail)</span>
+            <strong id="metricStd">-- &rarr; --</strong>
+          </div>
+        </div>
+
+        <div class="reference-box">
+          <strong>Paper Foundations:</strong><br>
+          &bull; <em>LIME Eq. (3)</em>: Max-RGB Initial Map<br>
+          &bull; <em>LIME Eq. (14)</em>: Structure-Aware Bilateral Smoothing<br>
+          &bull; <em>LIME Eq. (11)</em>: Recomposition Filtering
+        </div>
+      </div>
+
+      <!-- MAIN 4-PANEL DISPLAY (OBJECT-FIRST RESEARCH VIEW) -->
+      <div class="viewports-grid">
+        
+        <!-- PANEL 1: RAW INPUT -->
+        <div class="viewport-card">
+          <div class="viewport-header raw">
+            <span>1. RAW INPUT IMAGE</span>
+            <small id="rawRes" style="color:var(--muted);">Resolution: --</small>
+          </div>
+          <div class="img-container">
+            <img id="rawImg" src="" alt="Raw Input Image">
+            <div class="loading-overlay" id="loadingRaw">Loading image...</div>
+          </div>
+        </div>
+
+        <!-- PANEL 2: OBJECT & SHADOW SEGMENTATION -->
+        <div class="viewport-card" style="box-shadow: 0 0 20px rgba(6, 182, 212, 0.15);">
+          <div class="viewport-header" style="border-top: 3px solid var(--cyan);">
+            <span style="color:var(--cyan);">2. OBJECT & SHADOW SEGMENTATION</span>
+            <small style="color:var(--cyan); font-weight:700;">GREEN: OBJECT | RED: SHADOW</small>
+          </div>
+          <div class="img-container">
+            <img id="overlayImg" src="" alt="Object & Shadow Segmentation">
+            <div class="loading-overlay" id="loadingOverlay">Segmenting object & shadow...</div>
+          </div>
+        </div>
+
+        <!-- PANEL 3: SEAMLESS SHADOW-FREE -->
+        <div class="viewport-card" style="box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);">
+          <div class="viewport-header primary">
+            <span style="color:var(--green);">3. SEAMLESS SHADOW-FREE</span>
+            <small style="color:var(--green); font-weight:700;">★ ZERO GLITCH OUTPUT</small>
+          </div>
+          <div class="img-container">
+            <img id="shadowFreeImg" src="" alt="Seamless Shadow-Free Image">
+            <div class="loading-overlay" id="loadingShadowFree">Equalizing background...</div>
+          </div>
+        </div>
+
+        <!-- PANEL 4: ROBOT LOCALIZATION & SHAPE DETECTION -->
+        <div class="viewport-card" style="box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);">
+          <div class="viewport-header" style="border-top: 3px solid var(--yellow);">
+            <span style="color:var(--yellow);">4. ROBOT LOCALIZATION & SHAPE</span>
+            <small style="color:var(--yellow); font-weight:700;">GRIPPER POSE & BOUNDS</small>
+          </div>
+          <div class="img-container">
+            <img id="annotatedImg" src="" alt="Robot Localization Overlay">
+            <div class="loading-overlay" id="loadingAnnotated">Localizing workpiece...</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- MODE 2: HARDWARE LIVE STREAM (FOR WHEN READY) -->
+    <div class="hardware-layout" id="hardwareView">
+      <div class="card" style="padding:0; overflow:hidden;">
+        <div class="viewport-header" style="background:#0f172a; padding:12px 18px;">
+          <span>Live ESP32-CAM Hardware Stream</span>
+          <span style="color:var(--green);">Connected (10.187.226.123)</span>
+        </div>
+        <div style="background:#000; text-align:center;">
+          <img src="/video_feed" style="max-width:100%; height:auto;" alt="ESP32-CAM Live Stream">
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-title">Hardware Telemetry</div>
+        <p style="font-size:0.8rem; color:var(--muted);">Hardware stream is running in the background. Use the tab above to switch back to Image Research Studio at any time.</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let currentImageName = "harsh_shadow_shapes.jpg";
+    let debounceTimer = null;
+
+    function switchTab(mode) {
+      if (mode === "studio") {
+        document.getElementById("studioView").style.display = "grid";
+        document.getElementById("hardwareView").classList.remove("active");
+        document.getElementById("tabStudioBtn").classList.add("active");
+        document.getElementById("tabHardwareBtn").classList.remove("active");
+      } else {
+        document.getElementById("studioView").style.display = "none";
+        document.getElementById("hardwareView").classList.add("active");
+        document.getElementById("tabStudioBtn").classList.remove("active");
+        document.getElementById("tabHardwareBtn").classList.add("active");
+      }
+    }
+
+    async function loadAvailableImages() {
+      try {
+        const resp = await fetch("/api/images");
+        const data = await resp.json();
+        const select = document.getElementById("imageSelect");
+        select.innerHTML = "";
+
+        if (data.images && data.images.length > 0) {
+          data.images.forEach(img => {
+            const opt = document.createElement("option");
+            opt.value = img;
+            opt.textContent = img;
+            if (img === "harsh_shadow_shapes.jpg") opt.selected = true;
+            select.appendChild(opt);
+          });
+          currentImageName = select.value || data.images[0];
+          processCurrentImage();
+        }
+      } catch (err) {
+        console.error("Failed to load images:", err);
+      }
+    }
+
+    async function processCurrentImage() {
+      const select = document.getElementById("imageSelect");
+      currentImageName = select.value;
+      if (!currentImageName) return;
+
+      const gamma = parseFloat(document.getElementById("gammaRange").value);
+      const sigma = parseInt(document.getElementById("sigmaRange").value);
+      const denoise = parseFloat(document.getElementById("denoiseRange").value);
+
+      document.getElementById("loadingRaw").classList.add("active");
+      document.getElementById("loadingOverlay").classList.add("active");
+      document.getElementById("loadingShadowFree").classList.add("active");
+      document.getElementById("loadingAnnotated").classList.add("active");
+
+      try {
+        const resp = await fetch("/api/process_image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            image_name: currentImageName,
+            gamma: gamma,
+            sigma: sigma,
+            denoise: denoise
+          })
+        });
+
+        const data = await resp.json();
+        if (data.success) {
+          document.getElementById("rawImg").src = data.raw_b64;
+          document.getElementById("overlayImg").src = data.shadow_overlay_b64;
+          document.getElementById("shadowFreeImg").src = data.shadow_free_b64;
+          document.getElementById("annotatedImg").src = data.annotated_b64;
+
+          document.getElementById("rawRes").textContent = `Resolution: ${data.metrics.resolution}`;
+          document.getElementById("metricLatency").textContent = `${data.metrics.latency_ms} ms`;
+          document.getElementById("metricFps").textContent = `${data.metrics.fps} FPS`;
+          document.getElementById("metricMean").textContent = `${data.metrics.mean_before} → ${data.metrics.mean_after}`;
+          document.getElementById("metricStd").textContent = `${data.metrics.std_before} → ${data.metrics.std_after}`;
+        }
+      } catch (err) {
+        console.error("Processing error:", err);
+      } finally {
+        document.getElementById("loadingRaw").classList.remove("active");
+        document.getElementById("loadingOverlay").classList.remove("active");
+        document.getElementById("loadingShadowFree").classList.remove("active");
+        document.getElementById("loadingAnnotated").classList.remove("active");
+      }
+    }
+
+    function updateParam(name) {
+      if (name === "gamma") {
+        document.getElementById("gammaVal").textContent = document.getElementById("gammaRange").value;
+      } else if (name === "sigma") {
+        document.getElementById("sigmaVal").textContent = document.getElementById("sigmaRange").value;
+      } else if (name === "denoise") {
+        document.getElementById("denoiseVal").textContent = `${Math.round(document.getElementById("denoiseRange").value * 100)}%`;
+      }
+
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        processCurrentImage();
+      }, 120);
+    }
+
+    function applyPreset(gamma, sigma, denoise) {
+      document.getElementById("gammaRange").value = gamma;
+      document.getElementById("sigmaRange").value = sigma;
+      document.getElementById("denoiseRange").value = denoise;
+      document.getElementById("gammaVal").textContent = gamma;
+      document.getElementById("sigmaVal").textContent = sigma;
+      document.getElementById("denoiseVal").textContent = `${Math.round(denoise * 100)}%`;
+      processCurrentImage();
+    }
+
+    async function uploadCustomImage() {
+      const fileInput = document.getElementById("fileUpload");
+      if (!fileInput.files || fileInput.files.length === 0) return;
+
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      try {
+        const resp = await fetch("/api/upload", {
+          method: "POST",
+          body: formData
+        });
+        const res = await resp.json();
+        if (res.success) {
+          await loadAvailableImages();
+          document.getElementById("imageSelect").value = res.filename;
+          processCurrentImage();
+        }
+      } catch (err) {
+        console.error("Upload failed:", err);
+      }
+    }
+
+    // Initialize on page load
+    window.addEventListener("DOMContentLoaded", () => {
+      loadAvailableImages();
+    });
+  </script>
+</body>
+</html>
