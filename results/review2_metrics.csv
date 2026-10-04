@@ -1,0 +1,8 @@
+id,name,condition,category,resolution,latency_total_ms,latency_shadow_ms,latency_retinex_ms,latency_detection_ms,fps,lighting_state,shadow_reduction_pct,luminance_recovery_pct,lum_raw,lum_restored,rms_contrast_raw,rms_contrast_restored,num_shapes,avg_confidence,shapes_detail
+SCENE_1_NORMAL,Normal Lighting (Baseline),Ideal (350 lux),Baseline,800x600,778.2,543.2,330.6,1.0,1.3,GLARE_SUPPRESSION,94.0,97.1,207.9,131.9,0.14,0.065,2,98.0,"Square (96%), Triangle (100%)"
+SCENE_2_SHADOW,Harsh Directional Shadow,High Contrast Shadow (110 lux),Shadow,800x600,575.2,343.6,317.0,1.0,1.7,NORMALIZED,98.4,100.0,115.8,146.8,0.285,0.125,4,99.0,"Square (96%), Circle (100%), Hexagon (100%), Triangle (100%)"
+SCENE_3_LOWLIGHT,Extreme Low-Light,Severe Underexposure (< 40 lux),Low-Light,800x600,675.6,405.0,357.0,1.0,1.5,DARK_BOOST,99.2,100.0,57.8,144.8,0.047,0.266,4,99.0,"Square (100%), Circle (96%), Hexagon (100%), Triangle (100%)"
+SCENE_4_GLARE,Specular Spotlight Glare,Overexposed Glare (> 650 lux),Glare,800x600,599.7,349.9,332.0,1.0,1.7,GLARE_SUPPRESSION,96.5,100.0,229.6,131.5,0.123,0.044,1,100.0,Square (100%)
+SCENE_5_CHALLENGE,Hexagon vs Circle Ambiguity,SVR Classification Challenge,Discrimination,800x480,775.8,277.1,517.4,1.0,1.3,NORMALIZED,99.9,96.1,110.4,147.0,0.262,0.131,1,99.0,Circle (99%)
+SCENE_6_EARBUDS,Real Physical Earbuds Workpiece,Curved Plastic on Table with Penumbra,Physical Workpiece,768x1024,1220.5,772.2,509.6,1.0,0.8,NORMALIZED,69.6,74.0,162.8,169.4,0.191,0.112,1,99.0,Rounded Rectangle (99%)
+SCENE_7_BREADBOARD,Real Physical Breadboard Workpiece,High-Density Internal Pins + Cast Shadow,Physical Workpiece,1200x1600,1863.9,1057.4,715.9,90.6,0.5,GLARE_SUPPRESSION,85.2,94.9,176.5,137.9,0.163,0.063,1,99.0,Rounded Rectangle (99%)

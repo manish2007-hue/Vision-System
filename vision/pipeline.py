@@ -115,15 +115,14 @@ class VisionPipeline:
         # ── Stage 4: Triple-Voting Shape Detection ──
         annotated_frame, detections = self.detector.detect(edges, restored_bgr)
 
-        # Priority Check: If we extracted the primary object body contour in Stage 1,
-        # and it is larger than any detected internal marking, promote it as the primary object!
-        if obj_contour is not None:
+        # Stage 4: Priority check for single physical workpiece vs multi-object conveyor
+        # If detector found multiple shapes (conveyor scene), preserve all of them!
+        # Only promote single workpiece contour if scene is a single dominant object (e.g. Airpod case, breadboard)
+        if obj_contour is not None and (len(detections) <= 1):
             obj_area = cv2.contourArea(obj_contour)
-            if obj_area >= eff_min_area:
-                # Reset annotated_frame to clean restored frame so internal body markings are not drawn
+            # Must occupy significant area (> 5% of frame) to be a dominant physical part
+            if obj_area >= max(eff_min_area, int(h * w * 0.05)):
                 annotated_frame = restored_bgr.copy()
-                detections = []
-
                 rect = cv2.minAreaRect(obj_contour)
                 (cx, cy), (rw, rh), angle = rect
                 cx, cy = int(cx), int(cy)
@@ -133,10 +132,16 @@ class VisionPipeline:
                 aspect = max(rw, rh) / max(min(rw, rh), 1.0)
                 if aspect > 1.15:
                     shape_type = "Rounded Rectangle"
+                    num_vertices = 4
+                    angles = [90.0, 90.0, 90.0, 90.0]
                 elif circularity > 0.86:
                     shape_type = "Circle"
+                    num_vertices = 0
+                    angles = []
                 else:
                     shape_type = "Square"
+                    num_vertices = 4
+                    angles = [90.0, 90.0, 90.0, 90.0]
 
                 box = np.intp(cv2.boxPoints(rect))
                 cv2.drawContours(annotated_frame, [obj_contour], -1, (0, 255, 0), 3)
@@ -151,11 +156,13 @@ class VisionPipeline:
                 cv2.putText(annotated_frame, coord_str, (max(10, cx - 80), cy + 18),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 240, 255), 1)
 
-                detections.insert(0, {
+                detections = [{
                     "shape": shape_type,
                     "confidence": 99.0,
                     "circularity": round(circularity, 3),
                     "solidity": 0.98,
+                    "vertices": num_vertices,
+                    "angles": angles,
                     "centroid": [cx, cy],
                     "angle": round(angle, 1),
                     "area": int(obj_area),
@@ -168,7 +175,8 @@ class VisionPipeline:
                         "circularity_method": shape_type,
                         "hu_moments_method": shape_type
                     }
-                })
+                }]
+
 
         self.last_latency_ms = int((time.time() - t0) * 1000)
         return annotated_frame, detections

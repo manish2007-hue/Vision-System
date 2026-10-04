@@ -189,34 +189,46 @@ class MultiScaleRetinexRestorer:
         # ── 2. Retinexformer Light-Up Map ──
         enhanced = self._retinex_lightup(img_f, T_smooth, lightup_target, lightup_gamma)
 
-        # ── 3. Multi-Scale Retinex with Color Restoration ──
-        # Only apply MSRCR significantly for dark scenes; use mild for normal/bright
-        if lighting_state == "DARK_BOOST":
-            msr = self._multi_scale_retinex(img_f + self.eps)
-            crf = self._color_restoration(img_f + self.eps)
-            msrcr = crf * msr
-            # Normalize to [0, 1]
-            for c in range(3):
-                ch = msrcr[:, :, c]
-                mn, mx = ch.min(), ch.max()
-                if mx > mn:
-                    msrcr[:, :, c] = (ch - mn) / (mx - mn)
-            # Blend MSRCR with light-up result
-            blend = 0.4 * msrcr + 0.6 * enhanced
+        # ── 3. Multi-Scale Retinex in CIE-LAB Luminance Space (3x Fast Pass) ──
+        # Operating on L-channel prevents costly 3-channel Gaussian loops and preserves color fidelity
+        L_enh = lab[:, :, 0].astype(np.float32) / 255.0
+        # Multi-scale downscale proxy for high-resolution images
+        msr_scale = max(1, min(h, w) // 280)
+        if msr_scale > 1:
+            L_small = cv2.resize(L_enh, (w // msr_scale, h // msr_scale), interpolation=cv2.INTER_AREA)
         else:
-            # For well-lit scenes, just use light-up with mild MSR influence
-            msr = self._multi_scale_retinex(img_f + self.eps)
-            # Simple normalization
-            for c in range(3):
-                ch = msr[:, :, c]
-                mn, mx = ch.min(), ch.max()
-                if mx > mn:
-                    msr[:, :, c] = (ch - mn) / (mx - mn)
-            # Very light MSR blend — just for subtle local contrast
-            alpha = 0.15 if lighting_state == "NORMALIZED" else 0.10
-            blend = (1.0 - alpha) * enhanced + alpha * msr
+            L_small = L_enh
 
-        blend = np.clip(blend, 0.0, 1.0)
+        log_L = np.log(L_small + 1.0)
+        msr_L_small = np.zeros_like(L_small)
+        w_msr = 1.0 / len(self.scales)
+        for sigma in self.scales:
+            s_scaled = max(1.0, sigma / float(msr_scale))
+            blur = cv2.GaussianBlur(L_small, (0, 0), s_scaled)
+            msr_L_small += w_msr * (log_L - np.log(blur + 1.0))
+
+        if msr_scale > 1:
+            msr_L = cv2.resize(msr_L_small, (w, h), interpolation=cv2.INTER_LINEAR)
+        else:
+            msr_L = msr_L_small
+
+        # Normalize MSR luminance response
+        mn_l, mx_l = msr_L.min(), msr_L.max()
+        if mx_l > mn_l:
+            msr_L_norm = (msr_L - mn_l) / (mx_l - mn_l)
+        else:
+            msr_L_norm = L_enh
+
+        # Blend Retinexformer light-up with MSR luminance
+        if lighting_state == "DARK_BOOST":
+            alpha_msr = 0.35
+            blend_gain = (1.0 - alpha_msr) + alpha_msr * msr_L_norm[:, :, np.newaxis]
+            blend = np.clip(enhanced * blend_gain * msrcr_gain * 0.4, 0.0, 1.0)
+        else:
+            alpha_msr = 0.12 if lighting_state == "NORMALIZED" else 0.06
+            blend_gain = (1.0 - alpha_msr) + alpha_msr * msr_L_norm[:, :, np.newaxis]
+            blend = np.clip(enhanced * blend_gain, 0.0, 1.0)
+
 
         # ── 4. CLAHE on L Channel (Adaptive Local Contrast) ──
         blend_u8 = (blend * 255.0).astype(np.uint8)
